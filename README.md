@@ -20,13 +20,13 @@
 数据盘是挂载到/mnt下的，所以希望通过数据表分区的方式把文件转移到/mnt/mysql下，建表语句如下：
 ```
 CREATE TABLE `data_mnt` (
-	`id` INT (11) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`line_id` INT (11) UNSIGNED NOT NULL,
-	PRIMARY KEY (`id`)
+  `id` INT (11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `line_id` INT (11) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE = MyISAM AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8 PARTITION BY RANGE (`id`)(
-	PARTITION part01
-	VALUES
-		LESS THAN MAXVALUE DATA DIRECTORY = "/mnt/mysql" INDEX DIRECTORY = "/mnt/mysql"
+  PARTITION part01
+  VALUES
+    LESS THAN MAXVALUE DATA DIRECTORY = "/mnt/mysql" INDEX DIRECTORY = "/mnt/mysql"
 );
 ```
 这个在本地的ubuntu下是没有问题的，但是在阿里云ECS上却得到`Permission denied`的提示：
@@ -72,32 +72,32 @@ data_mnt.MYI
 - 停止MySQL服务
 打开终端切换到root用户，输入以下命令停止MySQL
 ```shell
-		service mysql stop
+  service mysql stop
 ```
 - 移动MySQL的数据目录
 确认MySQL停止后，切换目录到/var/lib下，将/var/lib/mysql复制（或移动）到/mnt
 ```shell
-		cd /var/lib
-		cp -a ./mysql /mnt/
+  cd /var/lib
+  cp -a ./mysql /mnt/
 ```
 - 修改MySQL的配置文件
 网络上很多教程都是复制了别人的，把数据库版本号改一下就随意贴上来，很不负责任。其中就有些瞎改的，在5.7的版本中，根本就没有/etc/my.cnf文件，有人还是说修改这个，甚至有人说如果没有要新建！！这些都不靠谱，经过我自己的探索（去查看可能与配置相关的文本文件），只需修改一处。
 将路径切换到/etc/mysql/mysql.conf.d，打开mysqld.cnf，进行修改：
 ```shell
-	cd /etc/mysql/mysql.conf.d
-	vi mysqld.cnf
+  cd /etc/mysql/mysql.conf.d
+  vi mysqld.cnf
 ```
 将
 ```shell
-datadir = /var/lib/mysql
+  datadir = /var/lib/mysql
 ```
 改为
 ```shell
-datadir = /mnt/mysql
+  datadir = /mnt/mysql
 ```
 然后重启MySQL，大功告成！如果成功可删除原来的文件，失败就是哪里失误了，改回去重新再来。
 ```shell
-	service mysql start
+  service mysql start
 ```
 
 ## 关于网上流传的一些方式的纠正（仅针对5.7）
