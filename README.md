@@ -105,3 +105,45 @@ data_mnt.MYI
 实际上不需要，有很多把低版本的教程改掉版本号就当5.7的版本发出来，datadir只需要修改/etc/mysql/mysql.conf.d/mysqld.cnf一处。
 - 除了datadir，还要修改socket
 也不需要，我看了他们写的大概是要把/var/lib/mysql/mysql.sock改一下，然而5.7版本的mysql.sock不在/var/lib/mysql下，通过修改的文件可以看到socket文件是/var/run/mysqld/mysqld.sock，与MySQL数据目录不在一起，因而不需要修改。
+
+
+## 关于阿里云更改MySQL配置后无法启动的补充
+很遗憾，转移数据库目录后在阿里云ECS无法启动MySQL服务，尽管这些操作已经在本地经过严格的测试。但是上述步骤仍可作为更改MySQL5.7数据目录的一般教程。既然这个方法在阿里云上行不通，那就只能出绝招了。
+### 更改数据盘的挂载路径
+目前的数据盘挂载到/mnt下，我们需要将其重新挂载到MySQL的数据目录下，即/var/lib/mysql
+- 停止MySQL服务
+```shell
+  service mysql stop
+```
+- 重命名MySQL数据目录
+```shell
+  cd /var/lib
+  mv mysql mysql.bak
+```
+- 数据盘重新挂载
+```shell
+  # 卸载数据盘
+  umount /dev/vdb1
+  # 格式化数据盘（可选）
+  mkfs.ext4 /dev/vdb1
+  # 创建/var/lib/mysql目录
+  cd /var/lib
+  mkdir mysql
+  # 挂载数据盘
+  mount /dev/vdb1 /var/lib/mysql
+```
+- 复制（移动）数据
+```shell
+  cp -a /var/lib/mysql.bak/*  /var/lib/mysql/
+  # 更改MySQL所有者
+  chown mysql:mysql /var/lib/mysql
+```
+- 启动MySQL服务
+```shell
+  service mysql start
+```
+- 确认正常运行后，删除原数据库文件
+```shell
+  rm -rf /var/lib/mysql.bak
+```
+以上补充的就是将数据盘挂载到MySQL数据目录的详细步骤。
