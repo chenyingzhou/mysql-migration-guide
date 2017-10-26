@@ -131,6 +131,8 @@ data_mnt.MYI
   mkdir mysql
   # 挂载数据盘
   mount /dev/vdb1 /var/lib/mysql
+  # 增加自动挂载配置
+  echo /dev/vdb1 /var/lib/mysql ext4 defaults 0 0 >> /etc/fstab
 ```
 - 复制（移动）数据
 ```shell
